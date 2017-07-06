@@ -1,0 +1,11 @@
+﻿{
+  "agents": [
+    {
+      "name": "RabbitMQ Cluster",
+      "host": "rabbitmq.dev.local",
+      "port": "15671",
+      "username": "username",
+      "password": "password"
+    }
+  ]
+}

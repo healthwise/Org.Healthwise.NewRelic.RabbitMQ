@@ -121,7 +121,7 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
                 ReportMetric("nodes/" + node.name + "/mem_alarm", "count", node.mem_alarm ? 1 : 0);
 
                 log.Info("[Reporting Metric] [nodes/{0}/disk_free_alarm] [{1}]", node.name, node.disk_free_alarm);
-                ReportMetric("nodes/" + node.name + "/mem_alarm", "count", node.disk_free_alarm ? 1 : 0);
+                ReportMetric("nodes/" + node.name + "/disk_free_alarm", "count", node.disk_free_alarm ? 1 : 0);
             }
 
             // The node count is zero.  This means that the cluster was not accessible. // CRITICAL

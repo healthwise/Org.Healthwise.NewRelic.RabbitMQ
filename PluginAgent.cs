@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using NewRelic.Platform.Sdk;
 using NewRelic.Platform.Sdk.Utils;
-using NewRelic.Platform.Sdk.Processors;
 
 namespace Org.Healthwise.NewRelic.RabbitMQ
 {
@@ -31,14 +30,10 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
         // RabbitMQ Object
         private RMQ RMQ;
 
-        // Create Dictionary of EpochProcessors to track rate over time for unknown number of items
-        private Dictionary<string, IProcessor> processors = new Dictionary<string, IProcessor>();
-
         // Provides logging for Plugin
         private Logger log = Logger.GetLogger(typeof(PluginAgent).Name);
 
-        int ClusterHealth = 1;  // 0 - Healthy, 1 - Unknown, 2 - Warning, 3 - Critical
-
+        int ClusterHealth = 1;  // 1 - Healthy, 2 - Warning, 3 - Critical
 
         /// <summary>
         /// Constructor for Agent Class
@@ -66,139 +61,200 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
         /// </summary>
         public override void PollCycle()
         {
-            ClusterHealth = 0; // Default to a 'healthy' cluster state until proven otherwise
-            PollNodes();  // Poll Nodes
-            PollQueues(); // Poll Queue metrics
-            PollCluster();  // Final Cluster Poll
+            ClusterHealth = 1; // Default to a 'healthy' cluster state until proven otherwise
+            PollNodes();       // Poll Nodes
+            PollQueues();      // Poll Queues
+            PollConnections(); // Poll Connections
+            PollCluster();     // Poll Cluster Details
         }
 
         private void PollNodes()
         {          
-            int num_nodes = 0;
-            int num_running_nodes = 0;
+            int num_nodes = 0;          // total number of nodes in the cluster
+            int num_running_nodes = 0;  // number of nodes in a 'running' state
             int num_net_partitions = 0; // across all nodes, should NEVER be more than 0.
+            List<NodeObject> nodes = new List<NodeObject>();
+
+            //log.Info("Polling nodes..");
             try {
-                // Get the Node Objects From the RabbitMQ Cluster.
-                List<NodeObject> nodes = RMQ.fetchRMQObject<List<NodeObject>>("/api/nodes");
-
-                foreach (var node in nodes)
-                {
-                    float memory_used_percentage = ((float)node.mem_used / node.mem_limit) * 100;
-                    log.Info("[Reporting Metric] [nodes/{0}/memory_used_percentage] [{1}]", node.name, memory_used_percentage);
-                    ReportMetric("nodes/" + node.name + "/memory_used_percentage", "Percentage", memory_used_percentage);
-                   
-                    log.Info("[Reporting Metric] [nodes/{0}/disk_free] [{1}]", node.name, node.disk_free);
-                    ReportMetric("nodes/" + node.name + "/disk_free", "Gigabytes", node.disk_free);
-
-                    float fd_used_percentage = ((float)node.fd_used / node.fd_total) * 100;
-                    log.Info("[Reporting Metric] [nodes/{0}/fd_used_percentage] [{1}]", node.name, fd_used_percentage);
-                    ReportMetric("nodes/" + node.name + "/fd_used_percentage", "Percent", fd_used_percentage);
-
-                    float sockets_used_percentage = ((float)node.sockets_used / node.sockets_total) * 100;
-                    log.Info("[Reporting Metric] [nodes/{0}/sockets_used_percentage] [{1}]", node.name, sockets_used_percentage);
-                    ReportMetric("nodes/" + node.name + "/sockets_used_percentage", "Percent", sockets_used_percentage);
-
-                    // Aggregate running node total
-                    num_nodes++;
-                    if (node.running == true)
-                    {
-                        num_running_nodes++;
-                    }
-                    
-                    if (node.partitions != null)
-                    {
-                        num_net_partitions += node.partitions.Count;                        
-                    }
-                }
+                nodes = RMQ.fetchRMQObject<List<NodeObject>>("/api/nodes");  // Get the Node Objects From the RabbitMQ Cluster.
             }
             catch (Exception e)
             {
+                // Then we are unable to get the node information from the cluster // CRITICAL
+                ClusterHealth = 3;
                 log.Error("Exception Thrown: '{0}'", e.Message);
-                if (ClusterHealth < 1)
+                log.Error("Doomsday clock advanced. ({0}) - Unable to fetch node information for the RabbitMQ cluster", ClusterHealth);
+            }
+
+            foreach (NodeObject node in nodes)
+            {
+                float memory_used_percentage = ((float)node.mem_used / node.mem_limit) * 100;
+                log.Info("[Reporting Metric] [nodes/{0}/memory_used_percentage] [{1}]", node.name, memory_used_percentage);
+                ReportMetric("nodes/" + node.name + "/memory_used_percentage", "Percentage", memory_used_percentage);
+
+                log.Info("[Reporting Metric] [nodes/{0}/disk_free] [{1}]", node.name, node.disk_free);
+                ReportMetric("nodes/" + node.name + "/disk_free", "Gigabytes", (float)node.disk_free);
+
+                float fd_used_percentage = ((float)node.fd_used / node.fd_total) * 100;
+                log.Info("[Reporting Metric] [nodes/{0}/fd_used_percentage] [{1}]", node.name, fd_used_percentage);
+                ReportMetric("nodes/" + node.name + "/fd_used_percentage", "Percent", fd_used_percentage);
+
+                float sockets_used_percentage = ((float)node.sockets_used / node.sockets_total) * 100;
+                log.Info("[Reporting Metric] [nodes/{0}/sockets_used_percentage] [{1}]", node.name, sockets_used_percentage);
+                ReportMetric("nodes/" + node.name + "/sockets_used_percentage", "Percent", sockets_used_percentage);
+
+                // Aggregate running node total
+                num_nodes++;
+                if (node.running == true)
                 {
-                    ClusterHealth = 1;  // 0 - Healthy, 1 - Unknown, 2 - Warning, 3 - Critical
-                    log.Error("Doomsday clock advanced. ({0}) - Unable to fetch node information for the RabbitMQ cluster", ClusterHealth);
+                    num_running_nodes++;
+                }
+
+                if (node.partitions != null)
+                {
+                    num_net_partitions += node.partitions.Count;
                 }
             }
 
-            // 0 - Healthy, 1 - Unknown, 2 - Warning, 3 - Critical
-            if (ClusterHealth < 1 && num_nodes == 0)
+            // The node count is zero.  This means that the cluster was not accessible. // CRITICAL
+            if (num_nodes == 0 && ClusterHealth < 3)
             {
-                ClusterHealth = 1;  // Unknown State (We are receiving a node count of zero)
+                ClusterHealth = 3;  // Unknown State (We are receiving a node count of zero)
                 log.Error("Doomsday clock advanced. ({0}) - Unknown State (We are receiving a node count of zero)", ClusterHealth);
             }
-
-            if (ClusterHealth < 2 && num_running_nodes < num_nodes)
-            {
-                ClusterHealth = 2; // Warning (we've lost nodes)
-                log.Error("Doomsday clock advanced. ({0}) - Warning (we've lost nodes)", ClusterHealth);
-            }
-
-            if (num_running_nodes == 0)
+            
+            // Then we also have no healthy nodes.  Only report this is we are not in a CRTICAL state. // CRITICAL
+            if (num_running_nodes == 0 && ClusterHealth < 3)
             {
                 ClusterHealth = 3;  // Critical (we have no healthy nodes)
                 log.Error("Doomsday clock advanced. ({0}) - Critical (we have no healthy nodes)", ClusterHealth);
             }
 
-            if (ClusterHealth < 3 && num_net_partitions != 0)
+            // We were able to connect to the cluster, but are running in a degraded state. // WARNING
+            if (num_running_nodes < num_nodes && ClusterHealth < 2)
             {
-                ClusterHealth = 3;  // 0 - Unknown, 1 - Healthy, 2 - Warning, 3 - Critical
+                ClusterHealth = 2; // Warning (we've lost nodes)
+                log.Error("Doomsday clock advanced. ({0}) - Warning (we've lost nodes)", ClusterHealth);
+            }
+            
+            // Then we have network partions // CRITICAL
+            if (num_net_partitions != 0)
+            {
+                ClusterHealth = 3;  // We have network partitions, oh no..
                 log.Error("Doomsday clock advanced. ({0}) - Network paritions seen: ({1})", ClusterHealth, num_net_partitions);
             }
-
-            // Report our metrics to New Relic
-            ReportMetric("global/nodes/total", "count", num_nodes);
-            ReportMetric("global/nodes/failed", "count", num_nodes - num_running_nodes);
-            ReportMetric("global/nodes/partitions", "count", num_net_partitions);
 
             log.Info("[Reporting Metric] [global/nodes/total] [{0}]", num_nodes);
             log.Info("[Reporting Metric] [global/nodes/failed] [{0}]", num_nodes - num_running_nodes);
             log.Info("[Reporting Metric] [global/nodes/partitions] [{0}]", num_net_partitions);
 
+            // Report our metrics to New Relic
+            ReportMetric("global/nodes/total", "count", num_nodes);
+            ReportMetric("global/nodes/failed", "count", num_nodes - num_running_nodes);
+            ReportMetric("global/nodes/partitions", "count", num_net_partitions);
         }
 
         private void PollQueues()
         {
             int num_queues = 0;
+            double deliver_get_details = 0;
+            double publish_details = 0;
+            List<QueueObject> queues = new List<QueueObject>();
+
+            //log.Info("Polling queues..");
             try
-            {
-                // Get the Node Objects From the RabbitMQ Cluster.
-                List<QueueObject> queues = RMQ.fetchRMQObject<List<QueueObject>>("/api/queues");
-                foreach (var queue in queues)
-                {
-                    num_queues++;
-                    log.Info("queue seen: ({0})", queue.name);
-                }
+            {                
+                queues = RMQ.fetchRMQObject<List<QueueObject>>("/api/queues");  // Get the Node Objects From the RabbitMQ Cluster.
             }           
             catch (Exception e)
             {
-                log.Error("Exception Thrown: '{0}'", e.Message);
-                if (ClusterHealth < 1)
+                // Then we are unable to get the node information from the cluster // CRITICAL
+                ClusterHealth = 3;
+                log.Error("Exception Thrown: '{0}'", e.Message);                
+                log.Error("Doomsday clock advanced. ({0}) - Unable to fetch queue information for the RabbitMQ cluster", ClusterHealth);
+            }
+
+            foreach (var queue in queues)
+            {
+                num_queues++;
+                //log.Info("queue.name = ({0})", queue.name);               
+                String encoded_vhost = System.Uri.EscapeDataString(queue.vhost);  // URL Encode the vhost
+                QueueObject detailedqueue = RMQ.fetchRMQObject<QueueObject>("/api/queues/" + encoded_vhost + "/" + queue.name);
+
+                if (detailedqueue != null)
                 {
-                    ClusterHealth = 1;  // 0 - Healthy, 1 - Unknown, 2 - Warning, 3 - Critical
-                    log.Error("Doomsday clock advanced. ({0}) - Unable to fetch queue information for the RabbitMQ cluster", ClusterHealth);
+                    foreach (var deliveries_collection_item in detailedqueue.deliveries)
+                    {
+                        if (deliveries_collection_item != null)
+                        {
+                            var myDetailsStats = deliveries_collection_item.stats;
+                            deliver_get_details += myDetailsStats.deliver_get_details.rate;
+                        }
+                    }
+                    foreach (var incoming_collection_item in detailedqueue.incoming)
+                    {
+                        if (incoming_collection_item != null)
+                        {
+                            var myDetailsStats = incoming_collection_item.stats;
+                            publish_details += myDetailsStats.publish_details.rate;
+                        }
+                    }
+                    log.Info("[Reporting Metric] [queues/{0}/{1}/deliveries/stats/deliver_get_details/rate] [{2}]", queue.vhost, queue.name, deliver_get_details);
+                    log.Info("[Reporting Metric] [queues/{0}/{1}/incoming/stats/publish_details/rate] [{2}]", queue.vhost, queue.name, publish_details);
+                    ReportMetric("queues/" + queue.name + "/message/delivery/rate", "count", (float)deliver_get_details);
+                    ReportMetric("queues/" + queue.name + "/message/incoming/rate", "count", (float)publish_details);
+                }
+
+                log.Info("[Reporting Metric] [queues/{0}/messages] [{1}]", queue.name, queue.messages);
+                ReportMetric("queues/" + queue.name + "/messages", "count", queue.messages);
+
+                deliver_get_details = 0;
+                publish_details = 0;
+            }
+
+            log.Info("[Reporting Metric] [queues/total] [{0}]", num_queues);
+            ReportMetric("queues/total", "count", num_queues);
+        }
+
+        private void PollConnections()
+        {
+            int num_connections = 0;
+            //log.Info("Polling connections..");
+
+            try {
+                // Get the Connection objects From the RabbitMQ Cluster.
+                List<ConnectionObject> connections = RMQ.fetchRMQObject<List<ConnectionObject>>("/api/connections");
+                foreach (var connection in connections)
+                {
+                    num_connections++;
                 }
             }
-            log.Info("Queues seen: ({0})", num_queues);
+            catch (Exception e)
+            {
+                log.Error("Exception Thrown: '{0}'", e.Message);
+                ClusterHealth = 3;  // 1 - Healthy, 2 - Warning, 3 - Critical
+                log.Error("Doomsday clock advanced. ({0}) - Unable to fetch connection information for the RabbitMQ cluster", ClusterHealth);
+            }
 
+            log.Info("[Reporting Metric] [connections/total] [{0}]", num_connections);
+            ReportMetric("connections/total", "count", num_connections);
         }
 
         private void PollCluster()
-        {            
+        {
+            //log.Info("Polling cluster..");
             try
             {
                 // Get the Overview object from the RabbitMQ Cluster
                 string MyClusterName = RMQ.fetchRMQObject<ClusterName>("/api/cluster-name").name;
-                // log.Info("RabbitMQ Cluster Name: ({0})", MyClusterName);
+                log.Info("RabbitMQ Cluster Name: ({0})", MyClusterName);
             }
             catch (Exception e)
             {
-                log.Error("Exception Thrown: '{0}'", e.Message);
-                if (ClusterHealth < 1)
-                {
-                    ClusterHealth = 1;  // 0 - Healthy, 1 - Unknown, 2 - Warning, 3 - Critical
-                    log.Error("Doomsday clock advanced. ({0}) - Unable to fetch cluster name for the RabbitMQ cluster", ClusterHealth);
-                }                    
+                ClusterHealth = 3;  // 0 - Healthy, 1 - Unknown, 2 - Warning, 3 - Critical
+                log.Error("Exception Thrown: '{0}'", e.Message);                
+                log.Error("Doomsday clock advanced. ({0}) - Unable to fetch cluster name for the RabbitMQ cluster", ClusterHealth);
             }
             log.Info("[Reporting Metric] [global/health] [{0}]", ClusterHealth);
             ReportMetric("global/health", "count", ClusterHealth);

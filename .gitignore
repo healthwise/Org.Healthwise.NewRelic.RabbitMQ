@@ -6,3 +6,5 @@
 /obj
 /config/plugin.json
 /config/newrelic.json
+/.vs
+/packages

@@ -84,6 +84,7 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
                 // Then we are unable to get the node information from the cluster // CRITICAL
                 ClusterHealth = 3;
                 log.Error("Exception Thrown: '{0}'", e.Message);
+                log.Error("Stacktrace: '{0}'", e.StackTrace);
                 log.Error("Doomsday clock advanced. ({0}) - Unable to fetch node information for the RabbitMQ cluster", ClusterHealth);
             }
 
@@ -115,6 +116,12 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
                 {
                     num_net_partitions += node.partitions.Count;
                 }
+
+                log.Info("[Reporting Metric] [nodes/{0}/mem_alarm] [{1}]", node.name, node.mem_alarm);               
+                ReportMetric("nodes/" + node.name + "/mem_alarm", "count", node.mem_alarm ? 1 : 0);
+
+                log.Info("[Reporting Metric] [nodes/{0}/disk_free_alarm] [{1}]", node.name, node.disk_free_alarm);
+                ReportMetric("nodes/" + node.name + "/mem_alarm", "count", node.disk_free_alarm ? 1 : 0);
             }
 
             // The node count is zero.  This means that the cluster was not accessible. // CRITICAL
@@ -171,7 +178,8 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
             {
                 // Then we are unable to get the node information from the cluster // CRITICAL
                 ClusterHealth = 3;
-                log.Error("Exception Thrown: '{0}'", e.Message);                
+                log.Error("Exception Thrown: '{0}'", e.Message);
+                log.Error("Stacktrace: '{0}'", e.StackTrace);
                 log.Error("Doomsday clock advanced. ({0}) - Unable to fetch queue information for the RabbitMQ cluster", ClusterHealth);
             }
 
@@ -233,6 +241,7 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
             catch (Exception e)
             {
                 log.Error("Exception Thrown: '{0}'", e.Message);
+                log.Error("Stacktrace: '{0}'", e.StackTrace);
                 ClusterHealth = 3;  // 1 - Healthy, 2 - Warning, 3 - Critical
                 log.Error("Doomsday clock advanced. ({0}) - Unable to fetch connection information for the RabbitMQ cluster", ClusterHealth);
             }
@@ -253,7 +262,8 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
             catch (Exception e)
             {
                 ClusterHealth = 3;  // 0 - Healthy, 1 - Unknown, 2 - Warning, 3 - Critical
-                log.Error("Exception Thrown: '{0}'", e.Message);                
+                log.Error("Exception Thrown: '{0}'", e.Message);
+                log.Error("Stacktrace: '{0}'", e.StackTrace);
                 log.Error("Doomsday clock advanced. ({0}) - Unable to fetch cluster name for the RabbitMQ cluster", ClusterHealth);
             }
             log.Info("[Reporting Metric] [global/health] [{0}]", ClusterHealth);

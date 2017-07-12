@@ -28,9 +28,11 @@ This plugin reports metrics about the RabbitMQ cluster being monitored.
 * Delivery Get Details (messages/second)
 * Publish Details (messages/second)
 * Number of Messages (count)
+* Number of Down Queues (count)
 
 # Requirements
 1. .Net 4.5
+2. RabbitMQ must have the management plugin installed, and be configured with rate_mode: detailed, as documented here: [RabbitMQ Management Plugin](https://www.rabbitmq.com/management.html)
 
 # Configuration / Installation
 1. Download release and unzip on machine to handle monitoring.

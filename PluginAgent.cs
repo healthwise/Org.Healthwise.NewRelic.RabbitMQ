@@ -91,19 +91,23 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
             foreach (NodeObject node in nodes)
             {
                 float memory_used_percentage = ((float)node.mem_used / node.mem_limit) * 100;
-                log.Info("[Reporting Metric] [nodes/{0}/memory_used_percentage] [{1}]", node.name, memory_used_percentage);
-                ReportMetric("nodes/" + node.name + "/memory_used_percentage", "Percentage", memory_used_percentage);
-
-                log.Info("[Reporting Metric] [nodes/{0}/disk_free] [{1}]", node.name, node.disk_free);
-                ReportMetric("nodes/" + node.name + "/disk_free", "Gigabytes", (float)node.disk_free);
-
                 float fd_used_percentage = ((float)node.fd_used / node.fd_total) * 100;
-                log.Info("[Reporting Metric] [nodes/{0}/fd_used_percentage] [{1}]", node.name, fd_used_percentage);
-                ReportMetric("nodes/" + node.name + "/fd_used_percentage", "Percent", fd_used_percentage);
-
                 float sockets_used_percentage = ((float)node.sockets_used / node.sockets_total) * 100;
-                log.Info("[Reporting Metric] [nodes/{0}/sockets_used_percentage] [{1}]", node.name, sockets_used_percentage);
-                ReportMetric("nodes/" + node.name + "/sockets_used_percentage", "Percent", sockets_used_percentage);
+
+                if (!float.IsNaN(memory_used_percentage) && !float.IsNaN(fd_used_percentage) && !float.IsNaN(sockets_used_percentage))
+                {
+                    log.Info("[Reporting Metric] [nodes/{0}/memory_used_percentage] [{1}]", node.name, memory_used_percentage);
+                    ReportMetric("nodes/" + node.name + "/memory_used_percentage", "Percentage", memory_used_percentage);
+
+                    log.Info("[Reporting Metric] [nodes/{0}/disk_free] [{1}]", node.name, node.disk_free);
+                    ReportMetric("nodes/" + node.name + "/disk_free", "Gigabytes", (float)node.disk_free);
+
+                    log.Info("[Reporting Metric] [nodes/{0}/fd_used_percentage] [{1}]", node.name, fd_used_percentage);
+                    ReportMetric("nodes/" + node.name + "/fd_used_percentage", "Percentage", fd_used_percentage);
+
+                    log.Info("[Reporting Metric] [nodes/{0}/sockets_used_percentage] [{1}]", node.name, sockets_used_percentage);
+                    ReportMetric("nodes/" + node.name + "/sockets_used_percentage", "Percentage", sockets_used_percentage);
+                }
 
                 // Aggregate running node total
                 num_nodes++;
@@ -167,6 +171,7 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
             int num_queues = 0;
             double deliver_get_details = 0;
             double publish_details = 0;
+            int down_nodes = 0;
             List<QueueObject> queues = new List<QueueObject>();
 
             //log.Info("Polling queues..");
@@ -186,40 +191,47 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
             foreach (var queue in queues)
             {
                 num_queues++;
-                //log.Info("queue.name = ({0})", queue.name);               
                 String encoded_vhost = System.Uri.EscapeDataString(queue.vhost);  // URL Encode the vhost
-                QueueObject detailedqueue = RMQ.fetchRMQObject<QueueObject>("/api/queues/" + encoded_vhost + "/" + queue.name);
 
-                if (detailedqueue != null)
+                if (queue.state == "down")
                 {
-                    foreach (var deliveries_collection_item in detailedqueue.deliveries)
-                    {
-                        if (deliveries_collection_item != null)
-                        {
-                            var myDetailsStats = deliveries_collection_item.stats;
-                            deliver_get_details += myDetailsStats.deliver_get_details.rate;
-                        }
-                    }
-                    foreach (var incoming_collection_item in detailedqueue.incoming)
-                    {
-                        if (incoming_collection_item != null)
-                        {
-                            var myDetailsStats = incoming_collection_item.stats;
-                            publish_details += myDetailsStats.publish_details.rate;
-                        }
-                    }
-                    log.Info("[Reporting Metric] [queues/{0}/{1}/deliveries/stats/deliver_get_details/rate] [{2}]", queue.vhost, queue.name, deliver_get_details);
-                    log.Info("[Reporting Metric] [queues/{0}/{1}/incoming/stats/publish_details/rate] [{2}]", queue.vhost, queue.name, publish_details);
-                    ReportMetric("queues/" + queue.name + "/message/delivery/rate", "count", (float)deliver_get_details);
-                    ReportMetric("queues/" + queue.name + "/message/incoming/rate", "count", (float)publish_details);
+                    down_nodes++;
                 }
+                else {
+                    QueueObject detailedqueue = RMQ.fetchRMQObject<QueueObject>("/api/queues/" + encoded_vhost + "/" + queue.name);
+                    if (detailedqueue != null)
+                    {
+                        foreach (var deliveries_collection_item in detailedqueue.deliveries)
+                        {
+                            if (deliveries_collection_item != null)
+                            {
+                                var myDetailsStats = deliveries_collection_item.stats;
+                                deliver_get_details += myDetailsStats.deliver_get_details.rate;
+                            }
+                        }
+                        foreach (var incoming_collection_item in detailedqueue.incoming)
+                        {
+                            if (incoming_collection_item != null)
+                            {
+                                var myDetailsStats = incoming_collection_item.stats;
+                                publish_details += myDetailsStats.publish_details.rate;
+                            }
+                        }
+                        log.Info("[Reporting Metric] [queues/{0}/{1}/deliveries/stats/deliver_get_details/rate] [{2}]", queue.vhost, queue.name, deliver_get_details);
+                        log.Info("[Reporting Metric] [queues/{0}/{1}/incoming/stats/publish_details/rate] [{2}]", queue.vhost, queue.name, publish_details);
+                        ReportMetric("queues/" + queue.name + "/message/delivery/rate", "count", (float)deliver_get_details);
+                        ReportMetric("queues/" + queue.name + "/message/incoming/rate", "count", (float)publish_details);
+                    }
+                    log.Info("[Reporting Metric] [queues/{0}/messages] [{1}]", queue.name, queue.messages);
+                    ReportMetric("queues/" + queue.name + "/messages", "count", queue.messages);
 
-                log.Info("[Reporting Metric] [queues/{0}/messages] [{1}]", queue.name, queue.messages);
-                ReportMetric("queues/" + queue.name + "/messages", "count", queue.messages);
-
-                deliver_get_details = 0;
-                publish_details = 0;
+                    deliver_get_details = 0;
+                    publish_details = 0;
+                }
             }
+
+            log.Info("[Reporting Metric] [queues/down] [{0}]", down_nodes);
+            ReportMetric("queues/down", "count", down_nodes);
 
             log.Info("[Reporting Metric] [queues/total] [{0}]", num_queues);
             ReportMetric("queues/total", "count", num_queues);
@@ -228,8 +240,7 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
         private void PollConnections()
         {
             int num_connections = 0;
-            //log.Info("Polling connections..");
-
+            // log.Info("Polling connections..");
             try {
                 // Get the Connection objects From the RabbitMQ Cluster.
                 List<ConnectionObject> connections = RMQ.fetchRMQObject<List<ConnectionObject>>("/api/connections");
@@ -245,14 +256,12 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
                 ClusterHealth = 3;  // 1 - Healthy, 2 - Warning, 3 - Critical
                 log.Error("Doomsday clock advanced. ({0}) - Unable to fetch connection information for the RabbitMQ cluster", ClusterHealth);
             }
-
             log.Info("[Reporting Metric] [connections/total] [{0}]", num_connections);
             ReportMetric("connections/total", "count", num_connections);
         }
 
         private void PollCluster()
         {
-            //log.Info("Polling cluster..");
             try
             {
                 // Get the Overview object from the RabbitMQ Cluster

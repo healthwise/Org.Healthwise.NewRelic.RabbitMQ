@@ -540,12 +540,16 @@ namespace Org.Healthwise.NewRelic.RabbitMQ
     public class QueueObject
     {
         public int messages { get; set; }
+
         public string vhost { get; set; }
+
         public string name { get; set; }
         
         public List<Incoming> incoming { get; set; }
 
         public List<Delivery> deliveries { get; set; }
+
+        public string state { get; set; }
 
         /*
         public MessageStats message_stats { get; set; }

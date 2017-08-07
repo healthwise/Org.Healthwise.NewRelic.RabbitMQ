@@ -2,7 +2,7 @@
 using System.IO;
 using NewRelic.Platform.Sdk;
 
-namespace Org.Healthwise.NewRelic.RabbitMQ
+namespace org.healthwise.newrelic.rabbitmq
 {
     class Program
     {

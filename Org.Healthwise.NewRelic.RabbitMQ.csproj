@@ -7,7 +7,7 @@
     <ProjectGuid>{DB891217-C56F-4007-8292-5D1CDAED7F55}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Org.Healthwise.NewRelic.RabbitMQ</RootNamespace>
+    <RootNamespace>org.healthwise.newrelic.rabbitmq</RootNamespace>
     <AssemblyName>plugin</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

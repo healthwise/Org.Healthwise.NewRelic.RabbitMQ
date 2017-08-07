@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Org.Healthwise.NewRelic.RabbitMQ
+namespace org.healthwise.newrelic.rabbitmq
 {
     ///////////////////////////////////////////////////////////////////////////////
     // Objects for /api/overview and /api/nodes

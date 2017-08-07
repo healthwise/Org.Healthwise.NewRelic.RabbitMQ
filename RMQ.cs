@@ -8,7 +8,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Org.Healthwise.NewRelic.RabbitMQ
+namespace org.healthwise.newrelic.rabbitmq
 {
     class RMQ
     {

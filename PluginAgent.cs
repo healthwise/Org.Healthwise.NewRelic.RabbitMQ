@@ -4,7 +4,7 @@ using System.Reflection;
 using NewRelic.Platform.Sdk;
 using NewRelic.Platform.Sdk.Utils;
 
-namespace Org.Healthwise.NewRelic.RabbitMQ
+namespace org.healthwise.newrelic.rabbitmq
 {
     class PluginAgent : Agent
     {

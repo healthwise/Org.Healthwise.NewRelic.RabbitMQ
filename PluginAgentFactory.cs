@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using NewRelic.Platform.Sdk;
 
-namespace Org.Healthwise.NewRelic.RabbitMQ
+namespace org.healthwise.newrelic.rabbitmq
 {
     class PluginAgentFactory : AgentFactory
     {

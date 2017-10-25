@@ -201,9 +201,9 @@ namespace org.healthwise.newrelic.rabbitmq
 
     public class Stats
     {
-        public int send_bytes { get; set; }
+        public long send_bytes { get; set; }
         public SendBytesDetails send_bytes_details { get; set; }
-        public int recv_bytes { get; set; }
+        public long recv_bytes { get; set; }
         public RecvBytesDetails recv_bytes_details { get; set; }
     }
 
@@ -211,18 +211,27 @@ namespace org.healthwise.newrelic.rabbitmq
     {
         public Stats stats { get; set; }
         public string name { get; set; }
+
+        /*
+        public string peer_addr { get; set; }
+        public long peer_port { get; set; }
+        public string sock_addr { get; set; }
+        public long sock_port { get; set; }
+        public long recv_bytes { get; set; }
+        public long send_bytes { get; set; }
+        */
     }
 
     public class MetricsGcQueueLength
     {
-        public int connection_closed { get; set; }
-        public int channel_closed { get; set; }
-        public int consumer_deleted { get; set; }
-        public int exchange_deleted { get; set; }
-        public int queue_deleted { get; set; }
-        public int vhost_deleted { get; set; }
-        public int node_node_deleted { get; set; }
-        public int channel_consumer_deleted { get; set; }
+        public long connection_closed { get; set; }
+        public long channel_closed { get; set; }
+        public long consumer_deleted { get; set; }
+        public long exchange_deleted { get; set; }
+        public long queue_deleted { get; set; }
+        public long vhost_deleted { get; set; }
+        public long node_node_deleted { get; set; }
+        public long channel_consumer_deleted { get; set; }
     }
 
 
@@ -234,19 +243,19 @@ namespace org.healthwise.newrelic.rabbitmq
     {
         public string name { get; set; }
 
-        public int mem_used { get; set; }
+        public long mem_used { get; set; }
 
-        public int mem_limit { get; set; }
+        public long mem_limit { get; set; }
 
         public double disk_free { get; set; }
 
-        public int fd_total { get; set; }
+        public long fd_total { get; set; }
 
-        public int fd_used { get; set; }
+        public long fd_used { get; set; }
 
-        public int sockets_used { get; set; }
+        public long sockets_used { get; set; }
 
-        public int sockets_total { get; set; }
+        public long sockets_total { get; set; }
 
         public bool running { get; set; }
 
@@ -258,12 +267,12 @@ namespace org.healthwise.newrelic.rabbitmq
 
         /*
                 public string os_pid { get; set; }
-                public int disk_free_limit { get; set; }
-                public int proc_total { get; set; }
+                public long disk_free_limit { get; set; }
+                public long proc_total { get; set; }
                 public string rates_mode { get; set; }
-                public int uptime { get; set; }
-                public int run_queue { get; set; }
-                public int processors { get; set; }
+                public long uptime { get; set; }
+                public long run_queue { get; set; }
+                public long processors { get; set; }
                 public List<ExchangeType> exchange_types { get; set; }
                 public List<AuthMechanism> auth_mechanisms { get; set; }
                 public List<Application> applications { get; set; }
@@ -272,34 +281,34 @@ namespace org.healthwise.newrelic.rabbitmq
                 public string sasl_log_file { get; set; }
                 public string db_dir { get; set; }
                 public List<string> config_files { get; set; }
-                public int net_ticktime { get; set; }
+                public long net_ticktime { get; set; }
                 public List<string> enabled_plugins { get; set; }
                 public string type { get; set; }
                 public MemUsedDetails mem_used_details { get; set; }
                 public FdUsedDetails fd_used_details { get; set; }
                 public SocketsUsedDetails sockets_used_details { get; set; }
-                public int proc_used { get; set; }
+                public long proc_used { get; set; }
                 public ProcUsedDetails proc_used_details { get; set; }
                 public DiskFreeDetails disk_free_details { get; set; }
-                public int gc_num { get; set; }
+                public long gc_num { get; set; }
                 public GcNumDetails gc_num_details { get; set; }
                 public long gc_bytes_reclaimed { get; set; }
                 public GcBytesReclaimedDetails gc_bytes_reclaimed_details { get; set; }
-                public int context_switches { get; set; }
+                public long context_switches { get; set; }
                 public ContextSwitchesDetails context_switches_details { get; set; }
-                public int io_read_count { get; set; }
+                public long io_read_count { get; set; }
                 public IoReadCountDetails io_read_count_details { get; set; }
-                public int io_read_bytes { get; set; }
+                public long io_read_bytes { get; set; }
                 public IoReadBytesDetails io_read_bytes_details { get; set; }
                 public double io_read_avg_time { get; set; }
                 public IoReadAvgTimeDetails io_read_avg_time_details { get; set; }
-                public int io_write_count { get; set; }
+                public long io_write_count { get; set; }
                 public IoWriteCountDetails io_write_count_details { get; set; }
-                public int io_write_bytes { get; set; }
+                public long io_write_bytes { get; set; }
                 public IoWriteBytesDetails io_write_bytes_details { get; set; }
                 public double io_write_avg_time { get; set; }
                 public IoWriteAvgTimeDetails io_write_avg_time_details { get; set; }
-                public int io_sync_count { get; set; }
+                public long io_sync_count { get; set; }
                 public IoSyncCountDetails io_sync_count_details { get; set; }
                 public double io_sync_avg_time { get; set; }
                 public IoSyncAvgTimeDetails io_sync_avg_time_details { get; set; }
@@ -307,23 +316,23 @@ namespace org.healthwise.newrelic.rabbitmq
                 public IoSeekCountDetails io_seek_count_details { get; set; }
                 public double io_seek_avg_time { get; set; }
                 public IoSeekAvgTimeDetails io_seek_avg_time_details { get; set; }
-                public int io_reopen_count { get; set; }
+                public long io_reopen_count { get; set; }
                 public IoReopenCountDetails io_reopen_count_details { get; set; }
-                public int mnesia_ram_tx_count { get; set; }
+                public long mnesia_ram_tx_count { get; set; }
                 public MnesiaRamTxCountDetails mnesia_ram_tx_count_details { get; set; }
-                public int mnesia_disk_tx_count { get; set; }
+                public long mnesia_disk_tx_count { get; set; }
                 public MnesiaDiskTxCountDetails mnesia_disk_tx_count_details { get; set; }
-                public int msg_store_read_count { get; set; }
+                public long msg_store_read_count { get; set; }
                 public MsgStoreReadCountDetails msg_store_read_count_details { get; set; }
-                public int msg_store_write_count { get; set; }
+                public long msg_store_write_count { get; set; }
                 public MsgStoreWriteCountDetails msg_store_write_count_details { get; set; }
-                public int queue_index_journal_write_count { get; set; }
+                public long queue_index_journal_write_count { get; set; }
                 public QueueIndexJournalWriteCountDetails queue_index_journal_write_count_details { get; set; }
-                public int queue_index_write_count { get; set; }
+                public long queue_index_write_count { get; set; }
                 public QueueIndexWriteCountDetails queue_index_write_count_details { get; set; }
-                public int queue_index_read_count { get; set; }
+                public long queue_index_read_count { get; set; }
                 public QueueIndexReadCountDetails queue_index_read_count_details { get; set; }
-                public int io_file_handle_open_attempt_count { get; set; }
+                public long io_file_handle_open_attempt_count { get; set; }
                 public IoFileHandleOpenAttemptCountDetails io_file_handle_open_attempt_count_details { get; set; }
                 public double io_file_handle_open_attempt_avg_time { get; set; }
                 public IoFileHandleOpenAttemptAvgTimeDetails io_file_handle_open_attempt_avg_time_details { get; set; }
@@ -404,21 +413,21 @@ namespace org.healthwise.newrelic.rabbitmq
     public class MessageStats
     {
         
-        public int deliver_get { get; set; }
+        public long deliver_get { get; set; }
 
-        public int ack { get; set; }
+        public long ack { get; set; }
 
-        public int redeliver { get; set; }
+        public long redeliver { get; set; }
 
-        public int deliver_no_ack { get; set; }
+        public long deliver_no_ack { get; set; }
 
-        public int deliver { get; set; }
+        public long deliver { get; set; }
 
-        public int get_no_ack { get; set; }
+        public long get_no_ack { get; set; }
 
-        public int get { get; set; }
+        public long get { get; set; }
 
-        public int publish { get; set; }
+        public long publish { get; set; }
 
         public PublishDetails publish_details { get; set; }
 
@@ -459,29 +468,29 @@ namespace org.healthwise.newrelic.rabbitmq
     public class BackingQueueStatus
     {
         public string mode { get; set; }
-        public int q1 { get; set; }
-        public int q2 { get; set; }
+        public long q1 { get; set; }
+        public long q2 { get; set; }
         public List<object> delta { get; set; }
-        public int q3 { get; set; }
-        public int q4 { get; set; }
-        public int len { get; set; }
+        public long q3 { get; set; }
+        public long q4 { get; set; }
+        public long len { get; set; }
         public string target_ram_count { get; set; }
-        public int next_seq_id { get; set; }
+        public long next_seq_id { get; set; }
         public double avg_ingress_rate { get; set; }
         public double avg_egress_rate { get; set; }
-        public int avg_ack_ingress_rate { get; set; }
-        public int avg_ack_egress_rate { get; set; }
-        public int mirror_seen { get; set; }
-        public int mirror_senders { get; set; }
+        public long avg_ack_ingress_rate { get; set; }
+        public long avg_ack_egress_rate { get; set; }
+        public long mirror_seen { get; set; }
+        public long mirror_senders { get; set; }
     }
 
     public class GarbageCollection
     {
-        public int minor_gcs { get; set; }
-        public int fullsweep_after { get; set; }
-        public int min_heap_size { get; set; }
-        public int min_bin_vheap_size { get; set; }
-        public int max_heap_size { get; set; }
+        public long minor_gcs { get; set; }
+        public long fullsweep_after { get; set; }
+        public long min_heap_size { get; set; }
+        public long min_bin_vheap_size { get; set; }
+        public long max_heap_size { get; set; }
     }
 
     public class Exchange
@@ -493,7 +502,7 @@ namespace org.healthwise.newrelic.rabbitmq
     public class IncomingStats
     {
         public PublishDetails publish_details { get; set; }
-        public int publish { get; set; }
+        public long publish { get; set; }
     }
 
     public class Incoming
@@ -505,10 +514,10 @@ namespace org.healthwise.newrelic.rabbitmq
     public class ChannelDetails
     {
         public string peer_host { get; set; }
-        public int peer_port { get; set; }
+        public long peer_port { get; set; }
         public string connection_name { get; set; }
         public string user { get; set; }
-        public int number { get; set; }
+        public long number { get; set; }
         public string node { get; set; }
         public string name { get; set; }
     }
@@ -516,19 +525,19 @@ namespace org.healthwise.newrelic.rabbitmq
     public class Stats2
     {
         public DeliverGetDetails deliver_get_details { get; set; }
-        public int deliver_get { get; set; }
+        public long deliver_get { get; set; }
         public AckDetails ack_details { get; set; }
-        public int ack { get; set; }
+        public long ack { get; set; }
         public RedeliverDetails redeliver_details { get; set; }
-        public int redeliver { get; set; }
+        public long redeliver { get; set; }
         public DeliverNoAckDetails deliver_no_ack_details { get; set; }
-        public int deliver_no_ack { get; set; }
+        public long deliver_no_ack { get; set; }
         public DeliverDetails deliver_details { get; set; }
-        public int deliver { get; set; }
+        public long deliver { get; set; }
         public GetNoAckDetails get_no_ack_details { get; set; }
-        public int get_no_ack { get; set; }
+        public long get_no_ack { get; set; }
         public GetDetails get_details { get; set; }
-        public int get { get; set; }
+        public long get { get; set; }
     }
 
     public class Delivery
@@ -539,7 +548,7 @@ namespace org.healthwise.newrelic.rabbitmq
 
     public class QueueObject
     {
-        public int messages { get; set; }
+        public long messages { get; set; }
 
         public string vhost { get; set; }
 
@@ -554,38 +563,38 @@ namespace org.healthwise.newrelic.rabbitmq
         /*
         public MessageStats message_stats { get; set; }
         public MessagesDetails messages_details { get; set; }
-        public int messages_ready { get; set; }
+        public long messages_ready { get; set; }
         public MessagesReadyDetails messages_ready_details { get; set; }
         public MessagesUnacknowledgedDetails messages_unacknowledged_details { get; set; }
-        public int messages_unacknowledged { get; set; }
+        public long messages_unacknowledged { get; set; }
         public ReductionsDetails reductions_details { get; set; }
-        public int reductions { get; set; }
+        public long reductions { get; set; }
         public string node { get; set; }
         public Arguments arguments { get; set; }
         public bool exclusive { get; set; }
         public bool auto_delete { get; set; }
         public bool durable { get; set; }
-        public int message_bytes_paged_out { get; set; }
-        public int messages_paged_out { get; set; }
+        public long message_bytes_paged_out { get; set; }
+        public long messages_paged_out { get; set; }
         public BackingQueueStatus backing_queue_status { get; set; }
         public object head_message_timestamp { get; set; }
-        public int message_bytes_persistent { get; set; }
-        public int message_bytes_ram { get; set; }
-        public int message_bytes_unacknowledged { get; set; }
-        public int message_bytes_ready { get; set; }
-        public int message_bytes { get; set; }
-        public int messages_persistent { get; set; }
-        public int messages_unacknowledged_ram { get; set; }
-        public int messages_ready_ram { get; set; }
-        public int messages_ram { get; set; }
+        public long message_bytes_persistent { get; set; }
+        public long message_bytes_ram { get; set; }
+        public long message_bytes_unacknowledged { get; set; }
+        public long message_bytes_ready { get; set; }
+        public long message_bytes { get; set; }
+        public long messages_persistent { get; set; }
+        public long messages_unacknowledged_ram { get; set; }
+        public long messages_ready_ram { get; set; }
+        public long messages_ram { get; set; }
         public GarbageCollection garbage_collection { get; set; }
         public string state { get; set; }
         public List<string> recoverable_slaves { get; set; }
         public List<string> synchronised_slave_nodes { get; set; }
         public List<string> slave_nodes { get; set; }
-        public int memory { get; set; }
+        public long memory { get; set; }
         public object consumer_utilisation { get; set; }
-        public int consumers { get; set; }
+        public long consumers { get; set; }
         public object exclusive_consumer_tag { get; set; }
         public string policy { get; set; }
         */
@@ -635,16 +644,16 @@ namespace org.healthwise.newrelic.rabbitmq
 
         /*
         public ReductionsDetails reductions_details { get; set; }
-        public int reductions { get; set; }
+        public long reductions { get; set; }
         public RecvOctDetails recv_oct_details { get; set; }
-        public int recv_oct { get; set; }
+        public long recv_oct { get; set; }
         public SendOctDetails send_oct_details { get; set; }
-        public int send_oct { get; set; }
+        public long send_oct { get; set; }
         public long connected_at { get; set; }
         public ClientProperties client_properties { get; set; }
-        public int channel_max { get; set; }
-        public int frame_max { get; set; }
-        public int timeout { get; set; }
+        public long channel_max { get; set; }
+        public long frame_max { get; set; }
+        public long timeout { get; set; }
         public string vhost { get; set; }
         public string user { get; set; }
         public string protocol { get; set; }
@@ -659,16 +668,16 @@ namespace org.healthwise.newrelic.rabbitmq
         public bool ssl { get; set; }
         public string peer_host { get; set; }
         public string host { get; set; }
-        public int peer_port { get; set; }
-        public int port { get; set; }        
+        public long peer_port { get; set; }
+        public long port { get; set; }        
         public string node { get; set; }
         public string type { get; set; }
         public GarbageCollection garbage_collection { get; set; }
-        public int channels { get; set; }
+        public long channels { get; set; }
         public string state { get; set; }
-        public int send_pend { get; set; }
-        public int send_cnt { get; set; }
-        public int recv_cnt { get; set; }
+        public long send_pend { get; set; }
+        public long send_cnt { get; set; }
+        public long recv_cnt { get; set; }
         */
     }
 

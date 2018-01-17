@@ -40,10 +40,10 @@ namespace org.healthwise.newrelic.rabbitmq
         /// Accepts name and other parameters from plugin.json file
         /// </summary>
         /// <param name="name"></param>
-        public PluginAgent(string name, string host, int port, string username, string password)
+        public PluginAgent(string protocol, string name, string host, int port, string username, string password)
         {
             this.name = name;
-            this.RMQ = new RMQ(host, port, username, password);
+            this.RMQ = new RMQ(protocol, host, port, username, password);
         }
 
         /// <summary>

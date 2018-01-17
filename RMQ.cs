@@ -14,12 +14,12 @@ namespace org.healthwise.newrelic.rabbitmq
     {
         private HttpClient client;
 
-        public RMQ(string host, int port, string username, string password)
+        public RMQ(string protocol, string host, int port, string username, string password)
         {
             // HTTP Client Settings
             var credentials = new NetworkCredential(username, password);
             var handler = new HttpClientHandler { Credentials = credentials };
-            var url = string.Format("https://{0}:{1}@{2}:{3}", username, password, host, port);
+            var url = string.Format("{0}://{1}:{2}@{3}:{4}", protocol, username, password, host, port);
 
             // Create HTTP client for future requests to the API            
             this.client = new HttpClient(handler);

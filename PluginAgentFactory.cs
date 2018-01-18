@@ -13,6 +13,7 @@ namespace org.healthwise.newrelic.rabbitmq
         /// <returns></returns>
         public override Agent CreateAgentWithConfiguration(IDictionary<string, object> properties)
         {
+            string protocol = (string)properties["protocol"];
             string name = (string)properties["name"];
             string host = (string)properties["host"];
             int port = int.Parse((string)properties["port"]);
@@ -24,7 +25,7 @@ namespace org.healthwise.newrelic.rabbitmq
                 throw new ArgumentNullException("'name', 'host', 'port', 'username' and 'password' cannot be null or empty. Do you have a 'config/plugin.json' file?");
             }
 
-            return new PluginAgent(name, host, port, username, password);
+            return new PluginAgent(protocol, name, host, port, username, password);
         }
     }
 }

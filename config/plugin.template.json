@@ -4,6 +4,7 @@
       "name": "RabbitMQ Cluster",
       "host": "rabbitmq.dev.local",
       "port": "15671",
+      "protocol": "https", 
       "username": "username",
       "password": "password"
     }
